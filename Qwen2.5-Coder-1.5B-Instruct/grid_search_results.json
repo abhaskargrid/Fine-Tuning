@@ -1,0 +1,201 @@
+[
+    {
+        "experiment": 1,
+        "n_samples": 5,
+        "temperature": 0.2,
+        "max_tokens": 256,
+        "scores": {
+            "pass@1": 26.0,
+            "pass@5": 40.0
+        }
+    },
+    {
+        "experiment": 2,
+        "n_samples": 10,
+        "temperature": 0.2,
+        "max_tokens": 256,
+        "scores": {
+            "pass@1": 21.0,
+            "pass@5": 38.29,
+            "pass@10": 40.0
+        }
+    },
+    {
+        "experiment": 3,
+        "n_samples": 20,
+        "temperature": 0.2,
+        "max_tokens": 256,
+        "scores": {
+            "pass@1": 20.0,
+            "pass@5": 33.18,
+            "pass@10": 38.51,
+            "pass@20": 40.0
+        }
+    },
+    {
+        "experiment": 4,
+        "n_samples": 5,
+        "temperature": 0.4,
+        "max_tokens": 256,
+        "scores": {
+            "pass@1": 18.0,
+            "pass@5": 50.0
+        }
+    },
+    {
+        "experiment": 5,
+        "n_samples": 10,
+        "temperature": 0.4,
+        "max_tokens": 256,
+        "scores": {
+            "pass@1": 27.0,
+            "pass@5": 63.33,
+            "pass@10": 80.0
+        }
+    },
+    {
+        "experiment": 6,
+        "n_samples": 20,
+        "temperature": 0.4,
+        "max_tokens": 256,
+        "scores": {
+            "pass@1": 19.5,
+            "pass@5": 43.02,
+            "pass@10": 54.54,
+            "pass@20": 70.0
+        }
+    },
+    {
+        "experiment": 7,
+        "n_samples": 5,
+        "temperature": 0.8,
+        "max_tokens": 256,
+        "scores": {
+            "pass@1": 16.0,
+            "pass@5": 40.0
+        }
+    },
+    {
+        "experiment": 8,
+        "n_samples": 10,
+        "temperature": 0.8,
+        "max_tokens": 256,
+        "scores": {
+            "pass@1": 16.0,
+            "pass@5": 46.67,
+            "pass@10": 60.0
+        }
+    },
+    {
+        "experiment": 9,
+        "n_samples": 20,
+        "temperature": 0.8,
+        "max_tokens": 256,
+        "scores": {
+            "pass@1": 21.0,
+            "pass@5": 48.17,
+            "pass@10": 59.83,
+            "pass@20": 70.0
+        }
+    },
+    {
+        "experiment": 10,
+        "n_samples": 5,
+        "temperature": 0.2,
+        "max_tokens": 512,
+        "scores": {
+            "pass@1": 20.0,
+            "pass@5": 40.0
+        }
+    },
+    {
+        "experiment": 11,
+        "n_samples": 10,
+        "temperature": 0.2,
+        "max_tokens": 512,
+        "scores": {
+            "pass@1": 21.0,
+            "pass@5": 37.5,
+            "pass@10": 40.0
+        }
+    },
+    {
+        "experiment": 12,
+        "n_samples": 20,
+        "temperature": 0.2,
+        "max_tokens": 512,
+        "scores": {
+            "pass@1": 18.5,
+            "pass@5": 30.45,
+            "pass@10": 36.58,
+            "pass@20": 40.0
+        }
+    },
+    {
+        "experiment": 13,
+        "n_samples": 5,
+        "temperature": 0.4,
+        "max_tokens": 512,
+        "scores": {
+            "pass@1": 20.0,
+            "pass@5": 40.0
+        }
+    },
+    {
+        "experiment": 14,
+        "n_samples": 10,
+        "temperature": 0.4,
+        "max_tokens": 512,
+        "scores": {
+            "pass@1": 30.0,
+            "pass@5": 57.5,
+            "pass@10": 70.0
+        }
+    },
+    {
+        "experiment": 15,
+        "n_samples": 20,
+        "temperature": 0.4,
+        "max_tokens": 512,
+        "scores": {
+            "pass@1": 15.0,
+            "pass@5": 29.7,
+            "pass@10": 40.0,
+            "pass@20": 60.0
+        }
+    },
+    {
+        "experiment": 16,
+        "n_samples": 5,
+        "temperature": 0.8,
+        "max_tokens": 512,
+        "scores": {
+            "pass@1": 14.0,
+            "pass@5": 30.0
+        }
+    },
+    {
+        "experiment": 17,
+        "n_samples": 10,
+        "temperature": 0.8,
+        "max_tokens": 512,
+        "scores": {
+            "pass@1": 24.0,
+            "pass@5": 52.26,
+            "pass@10": 60.0
+        }
+    },
+    {
+        "experiment": 18,
+        "n_samples": 20,
+        "temperature": 0.8,
+        "max_tokens": 512,
+        "scores": {
+            "pass@1": 19.0,
+            "pass@5": 53.02,
+            "pass@10": 69.66,
+            "pass@20": 80.0
+        }
+    }
+]
+

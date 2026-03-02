@@ -1,0 +1,242 @@
+(base) abhaskar@C19547 StarCoder2-3B-GGUF % python3 1_eval_baseline.py
+config.json: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████| 660/660 [00:00<00:00, 715kB/s]
+tokenizer_config.json: 7.30kB [00:00, 1.69MB/s]
+vocab.json: 2.78MB [00:00, 3.32MB/s]
+merges.txt: 1.67MB [00:00, 9.94MB/s]
+tokenizer.json: 7.03MB [00:00, 16.0MB/s]
+model.safetensors:   1%|█▏                                                                                           | 40.2M/3.09G [01:07<54:25, 933kB/s]model.safetensors: 100%|████████████████████████████████████████████████████████████████████████████████████████████| 3.09G/3.09G [07:26<00:00, 6.92MB/s]
+Loading weights: 100%|████████████████████████████████████████████████████████| 338/338 [00:00<00:00, 6264.33it/s, Materializing param=model.norm.weight]
+generation_config.json: 100%|████████████████████████████████████████████████████████████████████████████████████████████| 242/242 [00:00<00:00, 582kB/s]
+
+--- RUNNING BASELINE EVALUATION (BEST-OF-5) ---
+Evaluated Problem 1/10...
+Evaluated Problem 2/10...
+Evaluated Problem 3/10...
+Evaluated Problem 4/10...
+Evaluated Problem 5/10...
+Evaluated Problem 6/10...
+Evaluated Problem 7/10...
+Evaluated Problem 8/10...
+Evaluated Problem 9/10...
+Evaluated Problem 10/10...
+
+Calculating metrics (running unit tests)...
+
+=== BASELINE RESULTS ===
+Pass@1 (Accuracy if we only check 1st answer): 16.00%
+Pass@5 (Accuracy if we check all 5 answers):  50.00%
+(base) abhaskar@C19547 StarCoder2-3B-GGUF %  python3 2_finetune_lora.py
+Loading weights: 100%|████████████████████████████████████████████████████████| 338/338 [00:00<00:00, 4933.93it/s, Materializing param=model.norm.weight]
+
+--- STARTING LoRA FINE-TUNING ---
+{'loss': '1.593', 'grad_norm': '0.5618', 'learning_rate': '0.000192', 'epoch': '0.25'}
+{'loss': '2.345', 'grad_norm': '0.8479', 'learning_rate': '0.000182', 'epoch': '0.5'}
+{'loss': '1.562', 'grad_norm': '1.061', 'learning_rate': '0.000172', 'epoch': '0.75'}
+{'loss': '1.563', 'grad_norm': '0.4564', 'learning_rate': '0.000162', 'epoch': '1'}
+{'loss': '1.861', 'grad_norm': '0.4276', 'learning_rate': '0.000152', 'epoch': '1.25'}
+{'loss': '1.537', 'grad_norm': '15.36', 'learning_rate': '0.000142', 'epoch': '1.5'}
+{'loss': '1.442', 'grad_norm': '2.215', 'learning_rate': '0.000132', 'epoch': '1.75'}
+{'loss': '1.362', 'grad_norm': '12.01', 'learning_rate': '0.000122', 'epoch': '2'}
+{'loss': '1.06', 'grad_norm': '0.8895', 'learning_rate': '0.000112', 'epoch': '2.25'}
+{'loss': '1.266', 'grad_norm': '0.8948', 'learning_rate': '0.000102', 'epoch': '2.5'}
+{'loss': '1.304', 'grad_norm': '0.785', 'learning_rate': '9.2e-05', 'epoch': '2.75'}
+{'loss': '1.097', 'grad_norm': '1.034', 'learning_rate': '8.2e-05', 'epoch': '3'}
+{'loss': '1.057', 'grad_norm': '1.853', 'learning_rate': '7.2e-05', 'epoch': '3.25'}
+{'loss': '0.9301', 'grad_norm': '1.249', 'learning_rate': '6.2e-05', 'epoch': '3.5'}
+{'loss': '0.8776', 'grad_norm': '2.66', 'learning_rate': '5.2e-05', 'epoch': '3.75'}
+{'loss': '0.9407', 'grad_norm': '1.468', 'learning_rate': '4.2e-05', 'epoch': '4'}
+{'loss': '0.8903', 'grad_norm': '1.653', 'learning_rate': '3.2e-05', 'epoch': '4.25'}
+{'loss': '0.8955', 'grad_norm': '1.253', 'learning_rate': '2.2e-05', 'epoch': '4.5'}
+{'loss': '0.867', 'grad_norm': '2.584', 'learning_rate': '1.2e-05', 'epoch': '4.75'}
+{'loss': '0.7693', 'grad_norm': '1.084', 'learning_rate': '2e-06', 'epoch': '5'}
+{'train_runtime': '79.02', 'train_samples_per_second': '2.531', 'train_steps_per_second': '1.266', 'train_loss': '1.261', 'epoch': '5'}
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 100/100 [01:19<00:00,  1.27it/s]
+
+Saving LoRA adapter to ./lora-finetuned...
+(base) abhaskar@C19547 StarCoder2-3B-GGUF % python3 3_eval_lora.py
+Using device: mps
+Loading base model and tokenizer...
+Loading weights: 100%|████████████████████████████████████████████████████████| 338/338 [00:00<00:00, 4844.83it/s, Materializing param=model.norm.weight]
+Attaching LoRA adapter from ./lora-finetuned...
+
+--- RUNNING POST-TUNING EVALUATION (BEST-OF-5) ---
+Evaluated Problem 1/10...
+Evaluated Problem 2/10...
+Evaluated Problem 3/10...
+Evaluated Problem 4/10...
+Evaluated Problem 5/10...
+Evaluated Problem 6/10...
+Evaluated Problem 7/10...
+Evaluated Problem 8/10...
+Evaluated Problem 9/10...
+Evaluated Problem 10/10...
+
+Calculating metrics (running unit tests in the background)...
+
+=== POST-TUNING RESULTS ===
+Pass@1:  16.00%
+Pass@5:  40.00%
+(base) abhaskar@C19547 StarCoder2-3B-GGUF %  python3 2_finetune_lora.py
+Loading weights: 100%|████████████████████████████████████████████████████████| 338/338 [00:00<00:00, 4902.29it/s, Materializing param=model.norm.weight]
+
+--- STARTING LoRA FINE-TUNING ---
+{'loss': '1.591', 'grad_norm': '0.5898', 'learning_rate': '0.0001973', 'epoch': '0.25'}
+{'loss': '2.336', 'grad_norm': '0.8093', 'learning_rate': '0.000194', 'epoch': '0.5'}
+{'loss': '1.552', 'grad_norm': '1.12', 'learning_rate': '0.0001907', 'epoch': '0.75'}
+{'loss': '1.543', 'grad_norm': '0.4867', 'learning_rate': '0.0001873', 'epoch': '1'}
+{'loss': '1.811', 'grad_norm': '0.4421', 'learning_rate': '0.000184', 'epoch': '1.25'}
+{'loss': '1.501', 'grad_norm': '9.124', 'learning_rate': '0.0001807', 'epoch': '1.5'}
+{'loss': '1.347', 'grad_norm': '5.446', 'learning_rate': '0.0001773', 'epoch': '1.75'}
+{'loss': '1.322', 'grad_norm': '310.6', 'learning_rate': '0.000174', 'epoch': '2'}
+{'loss': '1.001', 'grad_norm': '1.557', 'learning_rate': '0.0001707', 'epoch': '2.25'}
+{'loss': '1.163', 'grad_norm': '1.024', 'learning_rate': '0.0001673', 'epoch': '2.5'}
+{'loss': '1.184', 'grad_norm': '1.097', 'learning_rate': '0.000164', 'epoch': '2.75'}
+{'loss': '0.9302', 'grad_norm': '1.568', 'learning_rate': '0.0001607', 'epoch': '3'}
+{'loss': '0.8234', 'grad_norm': '1.396', 'learning_rate': '0.0001573', 'epoch': '3.25'}
+{'loss': '0.7003', 'grad_norm': '2.225', 'learning_rate': '0.000154', 'epoch': '3.5'}
+{'loss': '0.7633', 'grad_norm': '109.3', 'learning_rate': '0.0001507', 'epoch': '3.75'}
+{'loss': '0.7654', 'grad_norm': '1.948', 'learning_rate': '0.0001473', 'epoch': '4'}
+{'loss': '0.651', 'grad_norm': '1.238', 'learning_rate': '0.000144', 'epoch': '4.25'}
+{'loss': '0.6658', 'grad_norm': '1.605', 'learning_rate': '0.0001407', 'epoch': '4.5'}
+{'loss': '0.6773', 'grad_norm': '1.435', 'learning_rate': '0.0001373', 'epoch': '4.75'}
+{'loss': '0.584', 'grad_norm': '3.556', 'learning_rate': '0.000134', 'epoch': '5'}
+{'loss': '0.5476', 'grad_norm': '2.084', 'learning_rate': '0.0001307', 'epoch': '5.25'}
+{'loss': '0.4636', 'grad_norm': '1.422', 'learning_rate': '0.0001273', 'epoch': '5.5'}
+{'loss': '0.549', 'grad_norm': '2.568', 'learning_rate': '0.000124', 'epoch': '5.75'}
+{'loss': '0.4803', 'grad_norm': '1.483', 'learning_rate': '0.0001207', 'epoch': '6'}
+{'loss': '0.4509', 'grad_norm': '7.08', 'learning_rate': '0.0001173', 'epoch': '6.25'}
+{'loss': '0.4469', 'grad_norm': '7.918', 'learning_rate': '0.000114', 'epoch': '6.5'}
+{'loss': '0.3814', 'grad_norm': '2.047', 'learning_rate': '0.0001107', 'epoch': '6.75'}
+{'loss': '0.4013', 'grad_norm': '2.068', 'learning_rate': '0.0001073', 'epoch': '7'}
+{'loss': '0.3125', 'grad_norm': '2.63', 'learning_rate': '0.000104', 'epoch': '7.25'}
+{'loss': '0.2867', 'grad_norm': '1.964', 'learning_rate': '0.0001007', 'epoch': '7.5'}
+{'loss': '0.4174', 'grad_norm': '5.276', 'learning_rate': '9.733e-05', 'epoch': '7.75'}
+{'loss': '0.4562', 'grad_norm': '2.21', 'learning_rate': '9.4e-05', 'epoch': '8'}
+{'loss': '0.3023', 'grad_norm': '2.306', 'learning_rate': '9.067e-05', 'epoch': '8.25'}
+{'loss': '0.3109', 'grad_norm': '2.11', 'learning_rate': '8.733e-05', 'epoch': '8.5'}
+{'loss': '0.251', 'grad_norm': '5.373', 'learning_rate': '8.4e-05', 'epoch': '8.75'}
+{'loss': '0.321', 'grad_norm': '2.047', 'learning_rate': '8.067e-05', 'epoch': '9'}
+{'loss': '0.3404', 'grad_norm': '5.601', 'learning_rate': '7.733e-05', 'epoch': '9.25'}
+{'loss': '0.2943', 'grad_norm': '2.766', 'learning_rate': '7.4e-05', 'epoch': '9.5'}
+{'loss': '0.2465', 'grad_norm': '2.525', 'learning_rate': '7.067e-05', 'epoch': '9.75'}
+{'loss': '0.2344', 'grad_norm': '1.632', 'learning_rate': '6.733e-05', 'epoch': '10'}
+{'loss': '0.1944', 'grad_norm': '1.8', 'learning_rate': '6.4e-05', 'epoch': '10.25'}
+{'loss': '0.1842', 'grad_norm': '2.738', 'learning_rate': '6.067e-05', 'epoch': '10.5'}
+{'loss': '0.2759', 'grad_norm': '2.594', 'learning_rate': '5.733e-05', 'epoch': '10.75'}
+{'loss': '0.2456', 'grad_norm': '3.664', 'learning_rate': '5.4e-05', 'epoch': '11'}
+{'loss': '0.1705', 'grad_norm': '2.651', 'learning_rate': '5.067e-05', 'epoch': '11.25'}
+{'loss': '0.1595', 'grad_norm': '3.86', 'learning_rate': '4.733e-05', 'epoch': '11.5'}
+{'loss': '0.2134', 'grad_norm': '1.786', 'learning_rate': '4.4e-05', 'epoch': '11.75'}
+{'loss': '0.2319', 'grad_norm': '6.055', 'learning_rate': '4.067e-05', 'epoch': '12'}
+{'loss': '0.1665', 'grad_norm': '2.903', 'learning_rate': '3.733e-05', 'epoch': '12.25'}
+{'loss': '0.176', 'grad_norm': '1.713', 'learning_rate': '3.4e-05', 'epoch': '12.5'}
+{'loss': '0.1814', 'grad_norm': '7.625', 'learning_rate': '3.067e-05', 'epoch': '12.75'}
+{'loss': '0.1971', 'grad_norm': '5.266', 'learning_rate': '2.733e-05', 'epoch': '13'}
+{'loss': '0.1509', 'grad_norm': '3.07', 'learning_rate': '2.4e-05', 'epoch': '13.25'}
+{'loss': '0.1549', 'grad_norm': '2.523', 'learning_rate': '2.067e-05', 'epoch': '13.5'}
+{'loss': '0.187', 'grad_norm': '1.674', 'learning_rate': '1.733e-05', 'epoch': '13.75'}
+{'loss': '0.1906', 'grad_norm': '2.355', 'learning_rate': '1.4e-05', 'epoch': '14'}
+{'loss': '0.1561', 'grad_norm': '3.986', 'learning_rate': '1.067e-05', 'epoch': '14.25'}
+{'loss': '0.15', 'grad_norm': '1.551', 'learning_rate': '7.333e-06', 'epoch': '14.5'}
+{'loss': '0.1534', 'grad_norm': '1.635', 'learning_rate': '4e-06', 'epoch': '14.75'}
+{'loss': '0.1672', 'grad_norm': '3.759', 'learning_rate': '6.667e-07', 'epoch': '15'}
+{'train_runtime': '237.6', 'train_samples_per_second': '2.525', 'train_steps_per_second': '1.263', 'train_loss': '0.5685', 'epoch': '15'}
+100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 300/300 [03:57<00:00,  1.26it/s]
+
+Saving LoRA adapter to ./lora-finetuned...
+(base) abhaskar@C19547 StarCoder2-3B-GGUF % python3 3_eval_lora.py
+Using device: mps
+Loading base model and tokenizer...
+Loading weights: 100%|████████████████████████████████████████████████████████| 338/338 [00:00<00:00, 4971.38it/s, Materializing param=model.norm.weight]
+Attaching LoRA adapter from ./lora-finetuned...
+
+--- RUNNING POST-TUNING EVALUATION (BEST-OF-5) ---
+Evaluated Problem 1/10...
+Evaluated Problem 2/10...
+Evaluated Problem 3/10...
+Evaluated Problem 4/10...
+Evaluated Problem 5/10...
+Evaluated Problem 6/10...
+Evaluated Problem 7/10...
+Evaluated Problem 8/10...
+Evaluated Problem 9/10...
+Evaluated Problem 10/10...
+
+Calculating metrics (running unit tests in the background)...
+
+=== POST-TUNING RESULTS ===
+Pass@1:  72.00%
+Pass@5:  100.00%
+
+
+
+
+(base) abhaskar@C19547 StarCoder2-3B-GGUF % python3 3_eval_lora.py
+Using device: mps
+Loading base model and tokenizer...
+Loading weights: 100%|████████████████████████████████████████████████████████| 338/338 [00:00<00:00, 4856.45it/s, Materializing param=model.norm.weight]
+Attaching LoRA adapter from ./lora-finetuned...
+
+--- RUNNING POST-TUNING EVALUATION (BEST-OF-5) ---
+Evaluated Problem 1/10...
+Evaluated Problem 2/10...
+Evaluated Problem 3/10...
+Evaluated Problem 4/10...
+Evaluated Problem 5/10...
+Evaluated Problem 6/10...
+Evaluated Problem 7/10...
+Evaluated Problem 8/10...
+Evaluated Problem 9/10...
+Evaluated Problem 10/10...
+
+Calculating metrics (running unit tests in the background)...
+
+=== POST-TUNING RESULTS ===
+Pass@1:  74.00%
+Pass@5:  90.00%
+(base) abhaskar@C19547 StarCoder2-3B-GGUF %
+
+
+
+When tested on the totally new dataset Then the output is
+
+
+(base) abhaskar@C19547 StarCoder2-3B-GGUF % python3 3_eval_lora.py
+Using device: mps
+Loading base model and tokenizer...
+Loading weights: 100%|████████████████████████████████████████████████████████| 338/338 [00:00<00:00, 4944.42it/s, Materializing param=model.norm.weight]
+Attaching LoRA adapter from ./lora-finetuned...
+
+--- RUNNING POST-TUNING EVALUATION (BEST-OF-5) ---
+Evaluated Problem 1/10...
+Evaluated Problem 2/10...
+Evaluated Problem 3/10...
+Evaluated Problem 4/10...
+Evaluated Problem 5/10...
+Evaluated Problem 6/10...
+Evaluated Problem 7/10...
+Evaluated Problem 8/10...
+Evaluated Problem 9/10...
+Evaluated Problem 10/10...
+
+Calculating metrics (running unit tests in the background)...
+
+=== POST-TUNING RESULTS ===
+Pass@1:  56.00%
+Pass@5:  90.00%
+(base) abhaskar@C19547 StarCoder2-3B-GGUF %
+
+
+
+
+Calculating metrics (running unit tests in the background)...
+
+=== POST-TUNING RESULTS ===   70-80
+Pass@1:  44.00%
+Pass@5:  70.00%
+
+=== POST-TUNING RESULTS ===    120 = 130
+Pass@1:  18.00%
+Pass@5:  50.00%
+
+
