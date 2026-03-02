@@ -1,3 +1,5 @@
+Base line test results 
+
 [
     {
         "experiment": 1,
@@ -198,3 +200,15 @@
         }
     }
 ]
+
+
+
+Testing the tuned model 
+
+=== FINAL COMPARISON ===
+Exp 14 (Base Winner): {'pass@1': np.float64(26.0), 'pass@5': np.float64(53.65), 'pass@10': np.float64(60.0)}
+Exp 5 (High Pass@5): {'pass@1': np.float64(29.0), 'pass@5': np.float64(52.54), 'pass@10': np.float64(60.0)}
+Exp 17 (Creative): {'pass@1': np.float64(18.0), 'pass@5': np.float64(45.52), 'pass@10': np.float64(60.0)}
+Exp 1 (Strict Logic): {'pass@1': np.float64(32.0), 'pass@5': np.float64(60.0)}
+
+

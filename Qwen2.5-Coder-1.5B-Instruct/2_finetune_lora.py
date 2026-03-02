@@ -18,9 +18,12 @@ model = AutoModelForCausalLM.from_pretrained(model_id)
 
 # LoRA Setup
 lora_config = LoraConfig(
-    r=8, lora_alpha=16,
+    r=8, 
+    lora_alpha=16,
     target_modules=["q_proj", "v_proj"],
-    lora_dropout=0.05, bias="none", task_type=TaskType.CAUSAL_LM
+    lora_dropout=0.05, 
+    bias="none", 
+    task_type=TaskType.CAUSAL_LM
 )
 model = get_peft_model(model, lora_config)
 
