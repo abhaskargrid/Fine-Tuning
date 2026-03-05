@@ -1,145 +1,146 @@
 import streamlit as st
 import torch
+import math
 import subprocess
 import tempfile
 import os
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
 
+# --- CONFIGURATION ---
+MODEL_ID = "Qwen/Qwen2.5-Coder-0.5B"
+ADAPTER_DIR = "./lora-finetuned"
+DEVICE = "mps" if torch.backends.mps.is_available() else "cpu"
 
-# ==========================================
-# 1. LOAD MODEL (Cached so it only loads once)
-# ==========================================
+
+# --- CACHED MODEL LOADING ---
 @st.cache_resource
 def load_model():
-    device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-    model_id = "Qwen/Qwen2.5-Coder-0.5B"
-    adapter_dir = "./qwen-lora-finetuned"
-
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
-    base_model = AutoModelForCausalLM.from_pretrained(model_id)
-    model = PeftModel.from_pretrained(base_model, adapter_dir).to(device)
-
-    return tokenizer, model, device
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
+    base_model = AutoModelForCausalLM.from_pretrained(MODEL_ID, torch_dtype=torch.bfloat16)
+    model = PeftModel.from_pretrained(base_model, ADAPTER_DIR).to(DEVICE)
+    return model, tokenizer
 
 
-tokenizer, model, device = load_model()
-
-
-# ==========================================
-# 2. SAFE TEST RUNNER
-# ==========================================
-def run_tests_safely(generated_code, test_code):
-    """Saves code to a temp file and runs it to prevent UI crashes."""
-    full_script = generated_code + "\n\n" + test_code
-
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-        f.write(full_script)
-        temp_path = f.name
-
+def execute_code(code, test_cases=""):
+    """Runs code in a temporary sandbox and returns pass/fail."""
+    full_code = f"{code}\n\n{test_cases}"
+    with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as tmp:
+        tmp.write(full_code.encode())
+        tmp_path = tmp.name
     try:
-        # Run the code with a 5-second timeout (prevents infinite loops)
-        result = subprocess.run(["python3", temp_path], capture_output=True, text=True, timeout=5)
-        os.remove(temp_path)
-
-        if result.returncode == 0:
-            return True, "All tests passed! ✅\n" + result.stdout
-        else:
-            return False, "Tests failed. ❌\n" + result.stderr
-    except subprocess.TimeoutExpired:
-        os.remove(temp_path)
-        return False, "Execution timed out (Infinite loop detected). ❌"
+        result = subprocess.run(["python3", tmp_path], capture_output=True, timeout=5, text=True)
+        os.remove(tmp_path)
+        return result.returncode == 0
+    except Exception:
+        if os.path.exists(tmp_path): os.remove(tmp_path)
+        return False
 
 
-# ==========================================
-# 3. STREAMLIT UI
-# ==========================================
-st.set_page_config(page_title="My Fine-Tuned AI Coder", layout="wide")
-st.title("🚀 Custom Qwen LoRA Coder + Search")
-st.markdown("Watch the fine-tuned model generate code and verify it against unit tests in real-time.")
+# --- SIMPLE MCTS LOGIC ---
+class MCTSNode:
+    def __init__(self, code="", parent=None):
+        self.code = code
+        self.parent = parent
+        self.children = []
+        self.visits = 0
+        self.reward = 0.0
 
-# Sidebar Settings
-st.sidebar.header("Search Settings")
-search_iterations = st.sidebar.slider("Max Search Branches (MCTS depth)", 1, 10, 5)
-temperature = st.sidebar.slider("Temperature (Creativity)", 0.1, 1.0, 0.4)
-max_tokens = st.sidebar.slider("Max Tokens", 128, 512, 256)
 
-# Main UI Inputs
-col1, col2 = st.columns(2)
-with col1:
-    prompt = st.text_area("Python Prompt / Docstring", height=250, value='''from typing import List
+# --- STREAMLIT UI ---
+st.set_page_config(page_title="Qwen MCTS Code Gen", layout="wide")
+
+st.title("🚀 Qwen2.5-Coder + MCTS Code Search")
+
+# Settings in 3 columns
+col_s1, col_s2, col_s3 = st.columns(3)
+with col_s1:
+    num_simulations = st.slider("Max Search Branches (MCTS)", min_value=1, max_value=20, value=10)
+with col_s2:
+    temperature = st.slider("Temperature (Creativity)", min_value=0.1, max_value=1.5, value=0.8, step=0.1)
+with col_s3:
+    max_tokens = st.slider("Max Tokens", min_value=64, max_value=1024, value=256, step=64)
+
+st.markdown("---")
+col1, col2 = st.columns([1, 1])
+
+# --- STARTING CODE DEFAULTS ---
+default_prompt = '''from typing import List
 
 def has_close_elements(numbers: List[float], threshold: float) -> bool:
-    """ Check if in given list of numbers, are any two numbers closer to each other than given threshold. """
-''')
+    """ Check if in given list of numbers, are any two numbers closer to each other than
+    given threshold.
+    >>> has_close_elements([1.0, 2.0, 3.0], 0.5)
+    False
+    >>> has_close_elements([1.0, 2.8, 3.0, 4.0, 5.0, 2.0], 0.3)
+    True
+    """'''
 
-with col2:
-    unit_tests = st.text_area("Hidden Unit Tests (Verification)", height=250, value='''
-assert has_close_elements([1.0, 2.0, 3.0], 0.5) == False
-assert has_close_elements([1.0, 2.8, 3.0, 4.0, 5.0, 2.0], 0.3) == True
-print("Tests passed!")
-''')
+default_tests = '''def check(candidate):
+    assert candidate([1.0, 2.0, 3.9, 4.0, 5.0, 2.2], 0.3) == True
+    assert candidate([1.0, 2.0, 3.9, 4.0, 5.0, 2.2], 0.05) == False
+    assert candidate([1.0, 2.0, 5.9, 4.0, 5.0], 0.95) == True
+    assert candidate([1.0, 2.0, 5.9, 4.0, 5.0], 0.8) == False
+    assert candidate([1.0, 2.0, 3.0, 4.0, 5.0, 2.0], 0.1) == True
 
-# ==========================================
-# 4. EXECUTION & MCTS LOGIC
-# ==========================================
-if st.button("Generate & Search", type="primary"):
+check(has_close_elements)'''
 
-    # UI Elements for real-time updates
-    status_text = st.empty()
+with col1:
+    prompt = st.text_area("Function Prompt:", value=default_prompt, height=250)
+    tests = st.text_area("Unit Tests (Asserts):", value=default_tests, height=250)
+    run_btn = st.button("Generate & Verify Code", type="primary", use_container_width=True)
+
+if run_btn:
+    model, tokenizer = load_model()
+    root = MCTSNode(code=prompt)
+
     progress_bar = st.progress(0)
-    log_area = st.expander("Search Logs", expanded=True)
+    status_text = st.empty()
+    best_node = None
 
-    inputs = tokenizer(prompt, return_tensors="pt").to(device)
+    for i in range(num_simulations):
+        status_text.text(f"Simulation {i + 1}/{num_simulations}...")
 
-    success = False
-    best_code = ""
+        current = root
+        inputs = tokenizer(current.code, return_tensors="pt").to(DEVICE)
 
-    # The Search Loop
-    for iteration in range(search_iterations):
-        status_text.markdown(f"**Searching branch {iteration + 1}/{search_iterations}...**")
-        progress_bar.progress((iteration) / search_iterations)
+        with torch.no_grad():
+            output = model.generate(
+                **inputs,
+                max_new_tokens=max_tokens,
+                pad_token_id=tokenizer.eos_token_id,
+                do_sample=True,
+                temperature=temperature,
+                top_p=0.95
+            )
+            gen_code = tokenizer.decode(output[0], skip_special_tokens=True)
 
-        # 1. Generate a path
-        outputs = model.generate(
-            **inputs,
-            max_new_tokens=max_tokens,
-            pad_token_id=tokenizer.eos_token_id,
-            do_sample=True,
-            temperature=temperature,
-            top_p=0.95
-        )
+        success = execute_code(gen_code, tests)
+        reward = 1.0 if success else 0.0
 
-        completion = tokenizer.decode(outputs[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True)
-        generated_code = prompt + completion
+        new_node = MCTSNode(code=gen_code, parent=current)
+        new_node.reward = reward
+        new_node.visits = 1
+        current.children.append(new_node)
 
-        # 2. Evaluate the path (Test Runner)
-        passed, test_output = run_tests_safely(generated_code, unit_tests)
+        while current:
+            current.visits += 1
+            current.reward += reward
+            current = current.parent
 
-        # 3. Log the branch results
-        with log_area:
-            st.markdown(f"**Attempt {iteration + 1}:**")
-            if passed:
-                st.success(test_output)
-            else:
-                st.error(test_output.split("\n")[
-                             -2] if "\n" in test_output else test_output)  # Just show the last error line
+        progress_bar.progress((i + 1) / num_simulations)
 
-        # 4. Search halting condition
-        if passed:
-            success = True
-            best_code = generated_code
-            progress_bar.progress(1.0)
-            status_text.markdown("**Search Complete! Valid path found. 🎉**")
+        if success:
+            best_node = new_node
             break
 
-        # Keep the last code just in case it never passes
-        best_code = generated_code
+            # Cleanup UI
+    status_text.empty()
+    progress_bar.empty()
 
-    if not success:
-        progress_bar.progress(1.0)
-        status_text.markdown("**Search Exhausted. No fully valid path found. ⚠️**")
+    if not best_node:
+        best_node = max(root.children, key=lambda x: x.reward / (x.visits + 1e-6)) if root.children else root
 
-    # Display the final code
-    st.subheader("Final Output Code:")
-    st.code(best_code, language="python")
+    with col2:
+        st.subheader("Generated Code")
+        st.code(best_node.code, language="python")
