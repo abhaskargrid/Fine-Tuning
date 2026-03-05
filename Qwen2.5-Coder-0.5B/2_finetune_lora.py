@@ -54,7 +54,7 @@ data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
 training_args = TrainingArguments(
     output_dir=output_dir,
-    num_train_epochs=15,
+    num_train_epochs=6,
     per_device_train_batch_size=2,
     learning_rate=2e-4,
     logging_steps=5,

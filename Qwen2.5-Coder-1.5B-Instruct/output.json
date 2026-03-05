@@ -235,8 +235,5 @@ Calculating metrics (running unit tests in the background)...
 Pass@1:  44.00%
 Pass@5:  70.00%
 
-=== POST-TUNING RESULTS ===    120 = 130
-Pass@1:  18.00%
-Pass@5:  50.00%
 
 
