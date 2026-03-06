@@ -15,11 +15,19 @@ DEVICE = "mps" if torch.backends.mps.is_available() else "cpu"
 
 # --- CACHED MODEL LOADING ---
 @st.cache_resource
-def load_model():
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
+def load_tokenizer():
+    return AutoTokenizer.from_pretrained(MODEL_ID)
+
+
+@st.cache_resource
+def load_base_model():
+    return AutoModelForCausalLM.from_pretrained(MODEL_ID, torch_dtype=torch.bfloat16).to(DEVICE)
+
+
+@st.cache_resource
+def load_tuned_model():
     base_model = AutoModelForCausalLM.from_pretrained(MODEL_ID, torch_dtype=torch.bfloat16)
-    model = PeftModel.from_pretrained(base_model, ADAPTER_DIR).to(DEVICE)
-    return model, tokenizer
+    return PeftModel.from_pretrained(base_model, ADAPTER_DIR).to(DEVICE)
 
 
 def execute_code(code, test_cases=""):
@@ -47,6 +55,48 @@ class MCTSNode:
         self.reward = 0.0
 
 
+def run_mcts_generation(model, tokenizer, prompt, tests, num_simulations, max_tokens, temperature):
+    root = MCTSNode(code=prompt)
+    best_node = None
+
+    for _ in range(num_simulations):
+        current = root
+        inputs = tokenizer(current.code, return_tensors="pt").to(DEVICE)
+
+        with torch.no_grad():
+            output = model.generate(
+                **inputs,
+                max_new_tokens=max_tokens,
+                pad_token_id=tokenizer.eos_token_id,
+                do_sample=True,
+                temperature=temperature,
+                top_p=0.95
+            )
+            gen_code = tokenizer.decode(output[0], skip_special_tokens=True)
+
+        success = execute_code(gen_code, tests)
+        reward = 1.0 if success else 0.0
+
+        new_node = MCTSNode(code=gen_code, parent=current)
+        new_node.reward = reward
+        new_node.visits = 1
+        current.children.append(new_node)
+
+        while current:
+            current.visits += 1
+            current.reward += reward
+            current = current.parent
+
+        if success:
+            best_node = new_node
+            break
+
+    if not best_node:
+        best_node = max(root.children, key=lambda x: x.reward / (x.visits + 1e-6)) if root.children else root
+
+    return best_node.code
+
+
 # --- STREAMLIT UI ---
 st.set_page_config(page_title="Qwen MCTS Code Gen", layout="wide")
 
@@ -60,6 +110,7 @@ with col_s2:
     temperature = st.slider("Temperature (Creativity)", min_value=0.1, max_value=1.5, value=0.8, step=0.1)
 with col_s3:
     max_tokens = st.slider("Max Tokens", min_value=64, max_value=1024, value=256, step=64)
+model_mode = st.radio("Model Mode", ["Tuned", "Base", "Both"], horizontal=True)
 
 st.markdown("---")
 col1, col2 = st.columns([1, 1])
@@ -91,56 +142,46 @@ with col1:
     run_btn = st.button("Generate & Verify Code", type="primary", use_container_width=True)
 
 if run_btn:
-    model, tokenizer = load_model()
-    root = MCTSNode(code=prompt)
+    tokenizer = load_tokenizer()
+    mode_to_runs = {
+        "Tuned": [("Tuned Model", load_tuned_model)],
+        "Base": [("Base Model", load_base_model)],
+        "Both": [("Base Model", load_base_model), ("Tuned Model", load_tuned_model)]
+    }
+    selected_runs = mode_to_runs[model_mode]
 
     progress_bar = st.progress(0)
     status_text = st.empty()
-    best_node = None
+    generated_outputs = []
+    total_steps = len(selected_runs)
 
-    for i in range(num_simulations):
-        status_text.text(f"Simulation {i + 1}/{num_simulations}...")
+    for idx, (label, model_loader) in enumerate(selected_runs):
+        status_text.text(f"Running {label} ({idx + 1}/{total_steps})...")
+        model = model_loader()
+        code = run_mcts_generation(
+            model=model,
+            tokenizer=tokenizer,
+            prompt=prompt,
+            tests=tests,
+            num_simulations=num_simulations,
+            max_tokens=max_tokens,
+            temperature=temperature
+        )
+        generated_outputs.append((label, code))
+        progress_bar.progress((idx + 1) / total_steps)
 
-        current = root
-        inputs = tokenizer(current.code, return_tensors="pt").to(DEVICE)
-
-        with torch.no_grad():
-            output = model.generate(
-                **inputs,
-                max_new_tokens=max_tokens,
-                pad_token_id=tokenizer.eos_token_id,
-                do_sample=True,
-                temperature=temperature,
-                top_p=0.95
-            )
-            gen_code = tokenizer.decode(output[0], skip_special_tokens=True)
-
-        success = execute_code(gen_code, tests)
-        reward = 1.0 if success else 0.0
-
-        new_node = MCTSNode(code=gen_code, parent=current)
-        new_node.reward = reward
-        new_node.visits = 1
-        current.children.append(new_node)
-
-        while current:
-            current.visits += 1
-            current.reward += reward
-            current = current.parent
-
-        progress_bar.progress((i + 1) / num_simulations)
-
-        if success:
-            best_node = new_node
-            break
-
-            # Cleanup UI
     status_text.empty()
     progress_bar.empty()
 
-    if not best_node:
-        best_node = max(root.children, key=lambda x: x.reward / (x.visits + 1e-6)) if root.children else root
-
     with col2:
-        st.subheader("Generated Code")
-        st.code(best_node.code, language="python")
+        if len(generated_outputs) == 1:
+            st.subheader(f"Generated Code ({generated_outputs[0][0]})")
+            st.code(generated_outputs[0][1], language="python")
+        else:
+            out_col1, out_col2 = st.columns(2)
+            with out_col1:
+                st.subheader(generated_outputs[0][0])
+                st.code(generated_outputs[0][1], language="python")
+            with out_col2:
+                st.subheader(generated_outputs[1][0])
+                st.code(generated_outputs[1][1], language="python")
